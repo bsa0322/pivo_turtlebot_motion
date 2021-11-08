@@ -4,6 +4,14 @@
 #include <sensor_msgs/LaserScan.h>
 #include <tf/transform_listener.h>
 
+//socket comm
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+
 #include <iostream>
 #include <stdio.h>
 #include <vector>
@@ -110,15 +118,7 @@ void track_people()
   pub.publish(twist);
 }
 
-void boundCallback(const deep_sort_pytorch::Bound::ConstPtr& bound)
-{
-  _x1 = bound->x1;
-  _x2 = bound->x2;
-  _y1 = bound->y1;
-  _y2 = bound->y2;
-
-  //ROS_INFO("I received bound: [%lf, %lf, %lf, %lf]", _x1, _x2, _y1, _y2); //받았다는 걸 명시...!
-}
+//바운드 박스 받아오기
 
 void rangesCallback(const sensor_msgs::LaserScan::ConstPtr& laser)
 {
@@ -138,7 +138,7 @@ int main(int argc, char** argv)
   pub = nh.advertise<geometry_msgs::Twist>("cmd_vel", 10);
 
   // Init odom subsciber
-  ros::Subscriber sub = nh.subscribe("bound_topic", 1000, boundCallback);  //카메라 바운드 좌표 받아오기
+  //ros::Subscriber sub = nh.subscribe("bound_topic", 1000, boundCallback);  //카메라 바운드 좌표 받아오기
   ros::Subscriber sub2 = nh.subscribe("/scan", 1000, rangesCallback); //장애물 센서 거리 받아오기
 
   printf("%s", msg);
