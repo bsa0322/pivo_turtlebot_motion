@@ -30,9 +30,9 @@ int str_len;//received m length
 char Connected[BUF_SIZE];//connnect message
 
 //socket variable
-unsigned char message_rec[100];
+unsigned char message_rec[16];
 float command_cartesian_x, command_cartesian_y, command_cartesian_z;
-float _x1, _x2, _y1, _y2;
+float _x1 = -1, _x2, _y1, _y2;
 char message_hand[73];
 
 //socket comn
@@ -67,8 +67,9 @@ void error_handling(const char * message) {
 //Socket message recieve
 void socektReceiveThread() {
   while (ros::ok()) {
+    ROS_INFO("thread -ing");
     //ZeroMemory(&message_rec, 72);
-    recvfrom(serv_sock, message_rec, 100, 0, (struct sockaddr *)&clnt_adr, &clnt_adr_sz); //클라이언트로부터 실제 메세지 받는 한 줄
+    recvfrom(serv_sock, message_rec, 16, 0, (struct sockaddr *)&clnt_adr, &clnt_adr_sz); //클라이언트로부터 실제 메세지 받는 한 줄
 
     //hand(받은 메세지를 사용하기 편하게 변수로 바꾸어 저장)
     memcpy(&_x1,	&message_rec,		4);
@@ -213,23 +214,24 @@ int main(int argc, char** argv)
   Connected[str_len] = 0;
   ROS_INFO("3. message from client: %s", Connected);
 
-  // comn: send message to Client
-  enum Run mode = TRAIN_SIM; //TEST_SIM; // TEST_REAL; //
-  // mode = TRAIN_SIM; //TEST_SIM; // TEST_REAL;
-  char message[] = "";
-  if (mode == TRAIN_SIM)
-      strcpy(message, "Hello, It's Server 1");
-  else if (mode == TEST_SIM)
-      strcpy(message, "Hello, It's Server 2");
-  else if (mode == TEST_REAL)
-      strcpy(message, "Hello, It's Server 3");
+  // // comn: send message to Client
+  // enum Run mode = TRAIN_SIM; //TEST_SIM; // TEST_REAL; //
+  // // mode = TRAIN_SIM; //TEST_SIM; // TEST_REAL;
+  // char message[] = "";
+  // if (mode == TRAIN_SIM)
+  //     strcpy(message, "Hello, It's Server 1");
+  // else if (mode == TEST_SIM)
+  //     strcpy(message, "Hello, It's Server 2");
+  // else if (mode == TEST_REAL)
+  //     strcpy(message, "Hello, It's Server 3");
 
-  sendto(serv_sock, message, sizeof(message), 0, (struct sockaddr *)&clnt_adr, clnt_adr_sz); //End of the connection testing
-  ROS_INFO("4. send message to client!");
+  // sendto(serv_sock, message, sizeof(message), 0, (struct sockaddr *)&clnt_adr, clnt_adr_sz); //End of the connection testing
+  // ROS_INFO("4. send message to client!");
 
-  std::thread t1(socektReceiveThread); //thread keep receiving socket data from unity while ros ok
+  std::thread t1(socektReceiveThread); //thread keep receiving socket data from unity while ros ok, thread는 생성한 후 다음 함수로 바로 넘어가
 
-  while(true)
+  //ros::ok() 를 써야 ctrl+c 할 때 종료할 수 있음
+  while(ros::ok())
   {
     found_people();
     track_people();
