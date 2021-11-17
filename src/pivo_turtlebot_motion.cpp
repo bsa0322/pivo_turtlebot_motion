@@ -21,6 +21,7 @@
 #define portnum 9999
 #define threshold 0.2
 #define PI 3.14159265
+#define IP_ADDR "192.168.0.93"
 
 //socket variable
 int serv_sock; //server socket
@@ -200,6 +201,13 @@ int main(int argc, char** argv)
   serv_adr.sin_family = AF_INET;
   serv_adr.sin_addr.s_addr = htonl(INADDR_ANY);
   serv_adr.sin_port = htons(portnum);
+
+  char ipbuf[INET_ADDRSTRLEN] = {0, };
+  memset(ipbuf, 0x00, sizeof(char)*INET_ADDRSTRLEN);
+  inet_ntop(AF_INET, &(serv_adr.sin_addr), ipbuf, INET_ADDRSTRLEN);
+
+  ROS_INFO("server_ip: %s", ipbuf);
+
 
   // comm: binding -> assign ip address and port number
   if (bind(serv_sock, (struct sockaddr *)&serv_adr, sizeof(serv_adr)) == -1) {
