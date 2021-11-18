@@ -18,7 +18,7 @@
 
 //Socket comm
 #define BUF_SIZE 32
-#define portnum 9999
+#define portnum 8000
 #define threshold 0.2
 #define PI 3.14159265
 #define IP_ADDR "192.168.0.93"
@@ -188,7 +188,7 @@ int main(int argc, char** argv)
   printf("%s", msg);
 
   // comm: create socket
-  serv_sock = socket(PF_INET, SOCK_DGRAM, 0);
+  serv_sock = socket(PF_INET, SOCK_DGRAM, 0); //소켓 개통
   if (serv_sock == -1) {
       error_handling ("UDP socket creation error");
   }
@@ -199,15 +199,8 @@ int main(int argc, char** argv)
   // comm: memset
   memset(&serv_adr, 0, sizeof(serv_adr));
   serv_adr.sin_family = AF_INET;
-  serv_adr.sin_addr.s_addr = htonl(INADDR_ANY);
+  serv_adr.sin_addr.s_addr = inet_addr(IP_ADDR); //IP주소 리드
   serv_adr.sin_port = htons(portnum);
-
-  char ipbuf[INET_ADDRSTRLEN] = {0, };
-  memset(ipbuf, 0x00, sizeof(char)*INET_ADDRSTRLEN);
-  inet_ntop(AF_INET, &(serv_adr.sin_addr), ipbuf, INET_ADDRSTRLEN);
-
-  ROS_INFO("server_ip: %s", ipbuf);
-
 
   // comm: binding -> assign ip address and port number
   if (bind(serv_sock, (struct sockaddr *)&serv_adr, sizeof(serv_adr)) == -1) {
@@ -216,8 +209,14 @@ int main(int argc, char** argv)
       ROS_INFO("2. success binding");
   }
 
+  //서버 소켓 ip주소 출력 
+  char ipbuf[INET_ADDRSTRLEN] = {0, };
+  memset(ipbuf, 0x00, sizeof(char)*INET_ADDRSTRLEN);
+  inet_ntop(AF_INET, &(serv_adr.sin_addr.s_addr), ipbuf, INET_ADDRSTRLEN);
+  ROS_INFO("server_ip: %s", ipbuf);
+
   // comm: Receive connectM from Client
-  clnt_adr_sz = sizeof(clnt_adr);//client address size
+  clnt_adr_sz = sizeof(clnt_adr); //client address size
   str_len = recvfrom(serv_sock, Connected, BUF_SIZE, 0, (struct sockaddr *)&clnt_adr, &clnt_adr_sz);//receive M(Connected) from client
   Connected[str_len] = 0;
   ROS_INFO("3. message from client: %s", Connected);
