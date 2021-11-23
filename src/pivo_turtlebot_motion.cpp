@@ -17,10 +17,9 @@
 #include <sys/socket.h>
 
 //Socket comm
-#define BUF_SIZE 32
+#define BUF_SIZE 28
 #define portnum 8000
 #define threshold 0.2
-#define PI 3.14159265
 #define IP_ADDR "192.168.0.93"
 
 //socket variable
@@ -32,15 +31,8 @@ char Connected[BUF_SIZE];//connnect message
 
 //socket variable
 unsigned char message_rec[16];
-float command_cartesian_x, command_cartesian_y, command_cartesian_z;
 float _x1 = -1, _x2, _y1, _y2;
 char message_hand[73];
-
-//socket comn
-// 3 run mode exist
-enum Run {
-    TRAIN_SIM, TEST_SIM, TEST_REAL
-};
 
 // Reminder message
 const char* msg = R"(
@@ -68,7 +60,7 @@ void error_handling(const char * message) {
 //Socket message recieve
 void socektReceiveThread() {
   while (ros::ok()) {
-    ROS_INFO("thread -ing");
+    //ROS_INFO("thread -ing");
     //ZeroMemory(&message_rec, 72);
     recvfrom(serv_sock, message_rec, 16, 0, (struct sockaddr *)&clnt_adr, &clnt_adr_sz); //클라이언트로부터 실제 메세지 받는 한 줄
 
@@ -188,7 +180,7 @@ int main(int argc, char** argv)
   printf("%s", msg);
 
   // comm: create socket
-  serv_sock = socket(PF_INET, SOCK_DGRAM, 0); //소켓 개통
+  serv_sock = socket(PF_INET, SOCK_DGRAM, 0); //소켓 개통(IPv4, UDP 통신)
   if (serv_sock == -1) {
       error_handling ("UDP socket creation error");
   }
@@ -199,7 +191,7 @@ int main(int argc, char** argv)
   // comm: memset
   memset(&serv_adr, 0, sizeof(serv_adr));
   serv_adr.sin_family = AF_INET;
-  serv_adr.sin_addr.s_addr = inet_addr(IP_ADDR); //IP주소 리드
+  serv_adr.sin_addr.s_addr = htonl(INADDR_ANY); //IP주소 리드
   serv_adr.sin_port = htons(portnum);
 
   // comm: binding -> assign ip address and port number
@@ -210,30 +202,13 @@ int main(int argc, char** argv)
   }
 
   //서버 소켓 ip주소 출력 
-  char ipbuf[INET_ADDRSTRLEN] = {0, };
-  memset(ipbuf, 0x00, sizeof(char)*INET_ADDRSTRLEN);
-  inet_ntop(AF_INET, &(serv_adr.sin_addr.s_addr), ipbuf, INET_ADDRSTRLEN);
-  ROS_INFO("server_ip: %s", ipbuf);
+  ROS_INFO("server ip: %s", inet_ntoa(serv_adr.sin_addr));
 
   // comm: Receive connectM from Client
   clnt_adr_sz = sizeof(clnt_adr); //client address size
   str_len = recvfrom(serv_sock, Connected, BUF_SIZE, 0, (struct sockaddr *)&clnt_adr, &clnt_adr_sz);//receive M(Connected) from client
   Connected[str_len] = 0;
   ROS_INFO("3. message from client: %s", Connected);
-
-  // // comn: send message to Client
-  // enum Run mode = TRAIN_SIM; //TEST_SIM; // TEST_REAL; //
-  // // mode = TRAIN_SIM; //TEST_SIM; // TEST_REAL;
-  // char message[] = "";
-  // if (mode == TRAIN_SIM)
-  //     strcpy(message, "Hello, It's Server 1");
-  // else if (mode == TEST_SIM)
-  //     strcpy(message, "Hello, It's Server 2");
-  // else if (mode == TEST_REAL)
-  //     strcpy(message, "Hello, It's Server 3");
-
-  // sendto(serv_sock, message, sizeof(message), 0, (struct sockaddr *)&clnt_adr, clnt_adr_sz); //End of the connection testing
-  // ROS_INFO("4. send message to client!");
 
   std::thread t1(socektReceiveThread); //thread keep receiving socket data from unity while ros ok, thread는 생성한 후 다음 함수로 바로 넘어가
 
