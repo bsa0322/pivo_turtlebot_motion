@@ -128,9 +128,9 @@ void track_people()
     if(linear_speed > 0.05) linear_speed = 0.05;
     if(linear_speed < -0.05) linear_speed = -0.05;
 
-    float angular_speed = x - 0.5;
-    if(angular_speed > 0.3) angular_speed = 0.3;
-    if(angular_speed < -0.3) angular_speed = -0.3;
+    float angular_speed = (x - 0.5) * 1.5;
+    if(angular_speed > 0.2) angular_speed = 0.2;
+    if(angular_speed < -0.2) angular_speed = -0.2;
 
     /*
     //장애물 처리
