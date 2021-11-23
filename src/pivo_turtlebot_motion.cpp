@@ -60,15 +60,21 @@ void error_handling(const char * message) {
 //Socket message recieve
 void socektReceiveThread() {
   while (ros::ok()) {
+    int x1, x2, y1, y2;
     //ROS_INFO("thread -ing");
     //ZeroMemory(&message_rec, 72);
     recvfrom(serv_sock, message_rec, 16, 0, (struct sockaddr *)&clnt_adr, &clnt_adr_sz); //클라이언트로부터 실제 메세지 받는 한 줄
 
     //hand(받은 메세지를 사용하기 편하게 변수로 바꾸어 저장)
-    memcpy(&_x1,	&message_rec,		4);
-    memcpy(&_x2,	&message_rec[4],	4);
-    memcpy(&_y1,	&message_rec[8],	4);
-    memcpy(&_y2,	&message_rec[12],	4);
+    memcpy(&x1,	&message_rec,		sizeof(int));
+    memcpy(&x2,	&message_rec[4],	sizeof(int));
+    memcpy(&y1,	&message_rec[8],	sizeof(int));
+    memcpy(&y2,	&message_rec[12],	sizeof(int));
+
+    _x1 = (float)x1 / (float)970;
+    _x2 = (float)x2 / (float)970;
+    _y1 = (float)y1 / (float)720;
+    _y2 = (float)y2 / (float)720;
 
     ROS_INFO("bound box: (%f, %f), (%f, %f)",_x1,_x2,_y1,_y2);
   }
@@ -123,8 +129,8 @@ void track_people()
     if(linear_speed < -0.05) linear_speed = -0.05;
 
     float angular_speed = x - 0.5;
-    if(angular_speed > 0.1) angular_speed = 0.1;
-    if(angular_speed < -0.1) angular_speed = -0.1;
+    if(angular_speed > 0.3) angular_speed = 0.3;
+    if(angular_speed < -0.3) angular_speed = -0.3;
 
     /*
     //장애물 처리
@@ -222,6 +228,7 @@ int main(int argc, char** argv)
   }
 
   t1.detach();
+  close(serv_sock);
   return 0;
 }
 
