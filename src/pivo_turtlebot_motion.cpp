@@ -50,6 +50,9 @@ float size = 0.5;
 //레이저 센서 앞에 장애물과의 거리
 std::vector <float> _ranges;
 
+//found를 위한 
+double t1 = 0, t2 = 0;
+
 //Socket comm
 void error_handling(const char * message) {
   fputs(message, stderr);
@@ -60,7 +63,10 @@ void error_handling(const char * message) {
 //Socket message recieve
 void socektReceiveThread() {
   while (ros::ok()) {
-    int x1, x2, y1, y2;
+    int x1, y1, x2, y2;
+
+    t1 = ros::Time::now().toSec();
+
     //ROS_INFO("thread -ing");
     //ZeroMemory(&message_rec, 72);
     recvfrom(serv_sock, message_rec, 16, 0, (struct sockaddr *)&clnt_adr, &clnt_adr_sz); //클라이언트로부터 실제 메세지 받는 한 줄
@@ -88,9 +94,9 @@ void found_people()
   while(ros::ok())
   {
     std::cout << "found_people" << '\n';
-    twist.angular.z = 0.15;
+    twist.angular.z = -0.6;
 
-    if(_x1 != -1 || _x2 != 0 || _y1 != 0 || _y2 != 0) break;
+    if(_x1 != -1) break;
 
     // Publish it and resolve any remaining callbacks
     pub.publish(twist);
@@ -117,20 +123,26 @@ void track_people()
   while(ros::ok())
   {
     std::cout << "track_people" << '\n';
-    if(_x1 == -1) break;
+  
+    t2 = ros::Time::now().toSec();
+
+    if (t2 - t1 > 1) {
+      _x1 = -1;
+      break;
+    }
 
     float x = (_x1+_x2)/2;
-    float  y = (_y1+_y2)/2;
-    float  size2 = fabs(_x2-_x1)*fabs(_y2-_y1);
+    float y = (_y1+_y2)/2;
+    float size2 = fabs(_x2-_x1)*fabs(_y2-_y1);
 
-    float linear_speed = size - size2;
-    if(linear_speed < 0.01 && linear_speed > -0.01) linear_speed = 0;
-    if(linear_speed > 0.05) linear_speed = 0.05;
-    if(linear_speed < -0.05) linear_speed = -0.05;
+    float linear_speed = (size - size2) * 0.5;
+    if(linear_speed < 0.03 && linear_speed > -0.03) linear_speed = 0;
+    if(linear_speed > 0.26) linear_speed = 0.26;
+    if(linear_speed < -0.26) linear_speed = -0.26;
 
-    float angular_speed = (x - 0.5) * 1.5;
-    if(angular_speed > 0.2) angular_speed = 0.2;
-    if(angular_speed < -0.2) angular_speed = -0.2;
+    float angular_speed = (x - 0.5) * 0.8;
+    if(angular_speed > 0.4) angular_speed = 0.4;
+    if(angular_speed < -0.4) angular_speed = -0.4;
 
     /*
     //장애물 처리
@@ -212,9 +224,9 @@ int main(int argc, char** argv)
 
   // comm: Receive connectM from Client
   clnt_adr_sz = sizeof(clnt_adr); //client address size
-  str_len = recvfrom(serv_sock, Connected, BUF_SIZE, 0, (struct sockaddr *)&clnt_adr, &clnt_adr_sz);//receive M(Connected) from client
-  Connected[str_len] = 0;
-  ROS_INFO("3. message from client: %s", Connected);
+  // str_len = recvfrom(serv_sock, Connected, BUF_SIZE, 0, (struct sockaddr *)&clnt_adr, &clnt_adr_sz);//receive M(Connected) from client
+  // Connected[str_len] = 0;
+  // ROS_INFO("3. message from client: %s", Connected);
 
   std::thread t1(socektReceiveThread); //thread keep receiving socket data from unity while ros ok, thread는 생성한 후 다음 함수로 바로 넘어가
 
